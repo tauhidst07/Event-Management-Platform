@@ -5,7 +5,19 @@ const adminMiddleware = require("../Middleware/adminMiddleware");
 const router = express.Router();   
 const zod = require("zod");
 const User = require("../Model/User");
-const Event = require("../Model/Event");
+const Event = require("../Model/Event"); 
+
+
+router.get("/event/:id",authMiddleware,adminMiddleware,async(req,res)=>{
+    const eventId = req.params.id; 
+    const events = await Event.findById(eventId).populate({
+        path:"registeredUser", 
+        select:["firstName","email","lastName"]
+    }); 
+    res.json({
+        events
+    })
+})
 
 const eventSchema = zod.object({
     title:zod.string(), 
