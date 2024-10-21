@@ -6,4 +6,6 @@ const adminMiddleware = async(req,res,next)=>{
         }) 
     } 
     next();
-}
+} 
+
+module.exports=adminMiddleware

@@ -6,10 +6,9 @@ const authMiddleware = async(req,res,next)=>{
             msg:"header is reuiqred"
         }) 
     } 
-    const token = req.headers.authorization.split(" ")[0]; 
+    const token = req.headers.authorization.split(" ")[1];  
     try{
        const decode = jwt.verify(token,process.env.JWT_SECRET);  
-       console.log(decode);
        req.email=decode.userEmail; 
        req.role=decode.role; 
        next();
