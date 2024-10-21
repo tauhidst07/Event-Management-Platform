@@ -35,9 +35,12 @@ router.post("/event",authMiddleware,adminMiddleware,async(req,res)=>{
 
 }) 
 
-router.get("/events",authMiddleware,adminMiddleware,async(req,res)=>{
+router.get("/events",authMiddleware,adminMiddleware,async(req,res)=>{  
+    const user = await User.findOne({email:req.email}); 
+    const adminId =user._id;  
+    const events = await Event.find({createdBy:adminId});
     return res.json({
-        adminEvents:[]
+        events
     })
 }) 
 
