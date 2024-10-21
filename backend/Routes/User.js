@@ -2,7 +2,8 @@ const express = require("express");
 const router = express.Router(); 
 const zod = require("zod"); 
 const User = require("../Model/User"); 
-const bcrypt = require("bcrypt");
+const bcrypt = require("bcrypt"); 
+const jwt = require("jsonwebtoken");
 
  
 const registerSchema = zod.object({
@@ -21,7 +22,13 @@ router.post("/register",async (req,res)=>{
     return res.status(400).json({
         msg:"Invalid input"
     })
-   } 
+   }  
+   const existingUser = await User.findOne({email:userData.email}); 
+   if(existingUser){
+    return res.status(400).json({
+        msg:"user already rgistered",
+    })
+   }
    const hashedPassword = await bcrypt.hash(userData.password,10);
    const user = await User.create({
     firstName:userData.firstName, 
@@ -40,6 +47,7 @@ const loginSchema = zod.object({
     email:zod.string().email(), 
     password:zod.string().min(6)
 })
+
 router.post("/login",async(req,res)=>{
   const loginData= req.body; 
   const result = loginSchema.safeParse(loginData); 
@@ -58,9 +66,14 @@ router.post("/login",async(req,res)=>{
     return res.status(401).json({
         msg:"invalid password"
     })
-  } 
+  }  
+  const token =jwt.sign({
+    userEmail:user.email, 
+    role:user.role
+  },process.env.JWT_SECRET);
   res.json({
-    msg:"logged in success"
+    msg:"logged in success", 
+    token
   })
 }) 
 
