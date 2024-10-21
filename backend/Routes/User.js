@@ -31,6 +31,24 @@ router.post("/event/register",authMiddleware,async(req,res)=>{
     res.json({
         msg:"user registered in event"
     })
+}) 
+
+router.post("/event/unregister",authMiddleware,async(req,res)=>{
+    const eventId=req.body.eventId; 
+    const user =await  User.findOne({email:req.email});  
+    const isRegistered = await Event.findOne({
+        _id: eventId,
+        registeredUser: { $in: [user._id] }
+      });
+      if (!isRegistered) {
+        return res.status(400).json({ msg: "User not registered for this event" });
+      } 
+    await Event.findByIdAndUpdate(eventId,{
+        $pull:{registeredUser:user._id}
+    })
+    res.json({
+        msg:"user has been unregistered"
+    })
 })
 router.get("/events",authMiddleware,async(req,res)=>{ 
     const events = await Event.find({});
