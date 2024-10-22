@@ -4,6 +4,7 @@ const authMiddleware = require("../Middleware/authMiddleware");
 const Event = require("../Model/Event");
 const User = require("../Model/User");
 const Feedback = require("../Model/Feedback");
+const emailSender = require("../utility/sendMail");
 const router = express.Router(); 
 
 
@@ -52,10 +53,33 @@ router.post("/event/register",authMiddleware,async(req,res)=>{
     }
     await Event.findByIdAndUpdate(eventId,{
         $push:{registeredUser:user._id}
-    }); 
-    res.json({
-        msg:"user registered in event"
-    })
+    });   
+    const admin = await User.findById(event.createdBy); 
+    const mailInfo={
+        receiver:admin.email, 
+        subject:`Registration Notification`, 
+        message:`<div>
+               <h1> ${user.firstName} has been registered in ${event.title}</h1>
+               <h2> user info </h2> 
+               <div>   
+                 <p> Name: ${user.firstName} ${user.lastName}</p> 
+                 <p> email: ${user.email} </p>
+               </div>
+        </div>
+        `
+    } 
+    try{
+        await emailSender(mailInfo); 
+        res.json({
+            msg:"user registered in event"
+        })
+    }
+    catch(err){
+        res.json(500).json({
+            msg:"internal server error"
+        })
+    }
+  
 }) 
 
 router.post("/event/unregister",authMiddleware,async(req,res)=>{
@@ -68,12 +92,35 @@ router.post("/event/unregister",authMiddleware,async(req,res)=>{
       if (!isRegistered) {
         return res.status(400).json({ msg: "User not registered for this event" });
       } 
-    await Event.findByIdAndUpdate(eventId,{
+   const event = await Event.findByIdAndUpdate(eventId,{
         $pull:{registeredUser:user._id}
-    })
-    res.json({
-        msg:"user has been unregistered"
-    })
+    })  
+    const admin = await User.findById(event.createdBy); 
+    const mailInfo={
+        receiver:admin.email, 
+        subject:`Registration Notification`, 
+        message:`<div>
+               <h1> ${user.firstName} has unregister from  ${event.title}</h1>
+               <h2> user info </h2> 
+               <div>   
+                 <p> Name: ${user.firstName} ${user.lastName}</p> 
+                 <p> email: ${user.email} </p>
+               </div>
+        </div>
+        `
+    } 
+    try{
+        await emailSender(mailInfo); 
+        res.json({
+            msg:"user has been unregistered"
+        })
+    } 
+    catch(err){
+        res.status(500).json({
+            msg:"internal server error"
+        })
+    }
+    
 }) 
 router.get("/registeredEvents",authMiddleware,async(req,res)=>{
     const user = await User.findOne({email:req.email});  
