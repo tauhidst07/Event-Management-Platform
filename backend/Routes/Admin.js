@@ -6,8 +6,18 @@ const router = express.Router();
 const zod = require("zod");
 const User = require("../Model/User");
 const Event = require("../Model/Event"); 
+const Feedback = require("../Model/Feedback");
 
 
+router.get("/event/feedback/:eventId",authMiddleware,adminMiddleware,async(req,res)=>{
+    const feedbacks = await Feedback.find({eventId:req.params.eventId}).populate({
+        path:"userId", 
+        select:["firstName"]
+    }); 
+    res.json({
+       feedbacks
+    })
+})
 router.get("/event/:id",authMiddleware,adminMiddleware,async(req,res)=>{
     const eventId = req.params.id; 
     const events = await Event.findById(eventId).populate({
@@ -18,7 +28,6 @@ router.get("/event/:id",authMiddleware,adminMiddleware,async(req,res)=>{
         events
     })
 })
-
 const eventSchema = zod.object({
     title:zod.string(), 
     description:zod.string(), 
@@ -47,10 +56,11 @@ router.post("/event",authMiddleware,adminMiddleware,async(req,res)=>{
 
 }) 
 
-router.get("/events",authMiddleware,adminMiddleware,async(req,res)=>{  
-    const user = await User.findOne({email:req.email}); 
-    const adminId =user._id;  
-    const events = await Event.find({createdBy:adminId});
+router.get("/events",authMiddleware,adminMiddleware,async(req,res)=>{   
+    const events = await Event.find({}).populate({
+        path:"registeredUser", 
+        select:["firstName","email","lastName"]
+    });
     return res.json({
         events
     })
